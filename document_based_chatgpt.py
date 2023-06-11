@@ -2,7 +2,7 @@ import streamlit as st
 from llama_index import GPTSimpleVectorIndex, SimpleDirectoryReader
 import os
 
-os.environ['OPENAI_API_KEY'] = 'sk-'  # Your API key
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 
 class MyApp:
