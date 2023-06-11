@@ -1,14 +1,12 @@
 import PyPDF2
-import openai
-import tkinter as tk
-from tkinter import filedialog, messagebox
+import streamlit as st
 import threading
 import time
 import pyperclip
 from tkinter.ttk import Progressbar
+import openai
 
 openai.api_key = "YOUR_API_KEY"
-
 
 def extract_text(filepath, progress_var):
     # Open the PDF file in read-binary mode
@@ -23,8 +21,7 @@ def extract_text(filepath, progress_var):
         for page_num in range(len(pdf_reader.pages)):
             # Update the progress bar
             progress_var.set(page_num + 1)
-            root.update_idletasks()
-            root.update()
+            st.experimental_rerun()
 
             # Get the page object
             page_obj = pdf_reader.pages[page_num]
@@ -58,82 +55,25 @@ def generate_summary(text, status_var):
     return summary
 
 
-def browse_file():
-    filepath = filedialog.askopenfilename()
-    if filepath.endswith('.pdf'):
-        file_path_var.set(filepath)
-        output_text.delete(1.0, tk.END)
-    else:
-        messagebox.showerror(title='Error', message='Please select a PDF file.')
-
-
-def clear_output():
-    output_text.delete(1.0, tk.END)
-
-
-def copy_to_clipboard():
-    pyperclip.copy(output_text.get(1.0, tk.END))
-
-
-def save_summary():
-    filepath = filedialog.asksaveasfilename(defaultextension='.txt')
-    with open(filepath, 'w') as f:
-        f.write(output_text.get(1.0, tk.END))
-
-
-def summarize():
-    filepath = file_path_var.get()
+def summarize(filepath):
     if filepath:
-        progress_var.set(0)
+        progress_var = st.empty()
         pdf_text = extract_text(filepath, progress_var)
+        status_var = st.empty()
         summary = generate_summary(pdf_text, status_var)
-        output_text.delete(1.0, tk.END)
-        output_text.insert(tk.END, summary)
-    else:
-        messagebox.showerror(title='Error', message='Please select a PDF file.')
+        st.text_area('Summary:', value=summary, height=200)
 
 
-root = tk.Tk()
-root.title('Chatgpt PDF Summarizer ')
+def main():
+    st.title('Chatgpt PDF Summarizer')
 
-# File path label and entry field
-file_path_label = tk.Label(root, text='File path:')
-file_path_label.pack(pady=10)
+    # File path input
+    filepath = st.file_uploader('Upload a PDF file', type='pdf')
 
-file_path_var = tk.StringVar()
-file_path_entry = tk.Entry(root, textvariable=file_path_var, width=100)
-file_path_entry.pack()
+    if filepath:
+        if st.button('Generate Summary'):
+            summarize(filepath.name)
 
-# Browse button
-browse_button = tk.Button(root, text='Browse', command=browse_file)
-browse_button.pack(pady=10)
 
-# Clear button
-clear_button = tk.Button(root, text='Clear', command=clear_output)
-clear_button.pack(pady=10)
-
-summarize_button = tk.Button(root, text='Generate Summary', command=summarize)
-summarize_button.pack(pady=10)
-
-download_summary_button = tk.Button(root, text='Download Summary', command=save_summary)
-download_summary_button.pack(pady=10)
-
-copy_button = tk.Button(root, text='Copy to Clipboard', command=copy_to_clipboard)
-copy_button.pack(pady=10)
-
-progress_var = tk.DoubleVar()
-progress_bar = Progressbar(root, variable=progress_var, maximum=50)
-progress_bar.pack(pady=10)
-
-status_var = tk.StringVar()
-status_var.set('')
-status_label = tk.Label(root, textvariable=status_var)
-status_label.pack(pady=10)
-
-output_label = tk.Label(root, text='Summary:')
-output_label.pack(pady=10)
-
-output_text = tk.Text(root, height=20)
-output_text.pack()
-
-root.mainloop()
+if __name__ == '__main__':
+    main()
