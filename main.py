@@ -6,7 +6,8 @@ import pyperclip
 from tkinter.ttk import Progressbar
 import openai
 
-openai.api_key = "YOUR_API_KEY"
+openai.api_key = os.environ.get("OPENAI_API_KEY")
+
 
 def extract_text(filepath, progress_var):
     # Open the PDF file in read-binary mode
